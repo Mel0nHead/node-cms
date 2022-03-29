@@ -7,6 +7,10 @@ const app = express();
 const fs = require("fs");
 const path = require("path");
 
+app.set("view engine", "html");
+app.set("views", __dirname);
+app.engine("html", require("hbs").__express);
+
 app.get("*", (req, res) => {
   const pathName = path.join(__dirname, "/content", req.path, "/index.md");
 
@@ -15,7 +19,7 @@ app.get("*", (req, res) => {
       res.send(e.message);
     } else {
       const html = marked.parse(data);
-      res.send(html);
+      res.render("template", { content: html });
     }
   });
 });
