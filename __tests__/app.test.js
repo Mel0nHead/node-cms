@@ -1,22 +1,21 @@
 const request = require("supertest");
 const glob = require("glob-promise");
-
-const fs = require("fs");
 const path = require("path");
-const { marked } = require("marked");
 
 const { app } = require("../app");
+const {
+  getUrlsFromMarkdownPaths,
+  resolveResponsesFromUrls,
+  convertMarkdownTitleToH1Tag,
+} = require("../utils/testing");
 
-const getValidUrls = async () => {
-  const files = await glob("content/**/*.md");
-  return files.map((f) => f.replace(/^content|\/index\.md/g, ""));
-};
+const CONTENT_FILES_PATTERN = "content/**/*.md";
 
 describe("app", () => {
   it("should return 200 status code when URL is valid", async () => {
-    const urls = await getValidUrls();
-    const responses = urls.map(async (url) => await request(app).get(url));
-    const resolvedResponses = await Promise.all(responses);
+    const files = await glob(CONTENT_FILES_PATTERN);
+    const urls = getUrlsFromMarkdownPaths(files);
+    const resolvedResponses = await resolveResponsesFromUrls(urls, app);
 
     resolvedResponses.forEach((res) => {
       expect(res.status).toBe(200);
@@ -24,20 +23,15 @@ describe("app", () => {
   });
 
   it("should return HTML from relevant markdown file in response body when URL is valid", async () => {
-    const relativePaths = await glob("content/**/*.md");
+    const relativePaths = await glob(CONTENT_FILES_PATTERN);
     const absolutePaths = relativePaths.map((name) => path.resolve(name));
 
-    const urls = relativePaths.map((p) =>
-      p.replace(/^content|\/index\.md/g, "")
-    );
-    const responses = urls.map(async (url) => await request(app).get(url));
-    const resolvedResponses = await Promise.all(responses);
+    const urls = getUrlsFromMarkdownPaths(relativePaths);
+    const resolvedResponses = await resolveResponsesFromUrls(urls, app);
 
     resolvedResponses.forEach((response, i) => {
-      const pathToMarkdownFile = absolutePaths[i];
-      const markdownData = fs.readFileSync(pathToMarkdownFile, "utf8");
-      const lines = markdownData.split("\n");
-      const h1Tag = marked.parse(lines[0]);
+      const h1Tag = convertMarkdownTitleToH1Tag(absolutePaths[i]);
+      // Note: I am only verifying that the markdown title is included in the HTML. I think this should give us enough confidence.
       expect(response.text).toMatch(h1Tag);
     });
   });
