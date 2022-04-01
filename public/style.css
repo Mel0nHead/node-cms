@@ -1,0 +1,15 @@
+html {
+  font-family: "Gill Sans", sans-serif;
+}
+
+body {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+h1 {
+  color: #ff385c;
+  text-transform: uppercase;
+  font-weight: 600;
+}

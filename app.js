@@ -11,6 +11,8 @@ app.set("view engine", "html");
 app.set("views", __dirname);
 app.engine("html", require("hbs").__express);
 
+app.use(express.static(__dirname + "/public"));
+
 app.get("*", (req, res) => {
   const pathName = path.join(__dirname, "/content", req.path, "/index.md");
 
